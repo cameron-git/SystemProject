@@ -1,5 +1,0 @@
-{
-    "board": "arduino:avr:uno",
-    "sketch": "rfid-read.ino",
-    "port": "COM5"
-}

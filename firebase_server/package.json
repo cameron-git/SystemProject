@@ -1,0 +1,8 @@
+{
+  "name": "firebase_server",
+  "version": "1.0.0",
+  "description": "Acts as a server to handle communications between a Arduino connected via Serial and Firebase",
+  "dependencies": {
+    "serialport": "^9.2.8"
+  }
+}
