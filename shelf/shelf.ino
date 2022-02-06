@@ -2,16 +2,28 @@ int sensorPin = A0;
 int prev;
 int cur;
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 }
 
-void loop() {
+void loop()
+{
   // read the value from the sensor:
   cur = analogRead(sensorPin);
-  if (cur != prev) {
+  if (cur < 512)
+  {
+    cur = 0;
+  }
+  else
+  {
+    cur = 1023;
+  }
+
+  if (cur != prev)
+  {
     Serial.println(cur);
     prev = cur;
   }
-  delay(200);
+  delay(1000);
 }
