@@ -17,7 +17,7 @@ void loop()
   }
   else
   {
-    cur = 1023;
+    cur = 1;
   }
 
   if (cur != prev)
@@ -25,5 +25,5 @@ void loop()
     Serial.println(cur);
     prev = cur;
   }
-  delay(1000);
+  delay(500);
 }
