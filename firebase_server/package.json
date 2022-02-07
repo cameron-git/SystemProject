@@ -4,6 +4,7 @@
   "description": "Acts as a server to handle communications between a Arduino connected via Serial and Firebase",
   "dependencies": {
     "firebase": "^9.6.5",
+    "firebase-admin": "^10.0.2",
     "serialport": "^9.2.8"
   }
 }
