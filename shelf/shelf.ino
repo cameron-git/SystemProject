@@ -1,5 +1,3 @@
-
-
 int sensorPin = A0;
 
 void setup() {
