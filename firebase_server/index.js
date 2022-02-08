@@ -1,14 +1,21 @@
-
-var index = fs.readFileSync( 'index.html');
-
 var SerialPort = require('serialport');
-const parsers = SerialPort.parsers;
 
+const { initializeApp, applicationDefault, cert } = require('firebase-admin/app');
+const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestore');
+const serviceAccount = require('./firebase-admin-key.json');
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const db = getFirestore();
+
+const parsers = SerialPort.parsers;
 const parser = new parsers.Readline({
     delimiter: '\r\n'
 });
 
-var port = new SerialPort('COM4',{ 
+var port = new SerialPort('COM5',{ 
     baudRate: 9600,
     dataBits: 8,
     parity: 'none',
@@ -17,3 +24,14 @@ var port = new SerialPort('COM4',{
 });
 
 port.pipe(parser);
+
+parser.on('data', function(data){
+    console.log(data);
+    setData(data);
+});
+
+async function setData(data) {
+    await db.collection('test').doc('switch').set({
+        reading: data
+    });
+}
