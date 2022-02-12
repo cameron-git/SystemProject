@@ -5,7 +5,7 @@ const { getFirestore, Timestamp, FieldValue } = require('firebase-admin/firestor
 const serviceAccount = require('./firebase-admin-key.json');
 
 initializeApp({
-  credential: cert(serviceAccount)
+    credential: cert(serviceAccount)
 });
 
 const db = getFirestore();
@@ -15,23 +15,21 @@ const parser = new parsers.Readline({
     delimiter: '\r\n'
 });
 
-var port = new SerialPort('COM5',{ 
-    baudRate: 9600,
-    dataBits: 8,
-    parity: 'none',
-    stopBits: 1,
-    flowControl: false
+var port = new SerialPort('COM5', {
+    baudRate: 9600
 });
 
 port.pipe(parser);
 
-parser.on('data', function(data){
+parser.on('data', function (data) {
     console.log(data);
     setData(data);
 });
 
 async function setData(data) {
-    await db.collection('test').doc('switch').set({
-        reading: data
+    var obj = JSON.parse(data);
+    console.log(obj.arduinoId);
+    await db.collection('arduinos').doc(obj.arduinoId).set({
+        shelves: obj.shelves
     });
 }
