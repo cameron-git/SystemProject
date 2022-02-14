@@ -23,13 +23,17 @@ port.pipe(parser);
 
 parser.on('data', function (data) {
     console.log(data);
-    setData(data);
+    var obj = JSON.parse(data);
+    var shelves = obj.shelves;
+    shelves.forEach(function (entry) {
+        setShelf(entry, obj.arduinoId);
+    })
 });
 
-async function setData(data) {
-    var obj = JSON.parse(data);
-    console.log(obj.arduinoId);
-    await db.collection('arduinos').doc(obj.arduinoId).set({
-        shelves: obj.shelves
+async function setShelf(shelf, arduinoId) {
+    await db.collection('shelves').doc(shelf.shelfId).set({
+        arduinoId: arduinoId,
+        contents: shelf.contents,
+        capacity: shelf.capacity
     });
 }

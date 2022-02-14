@@ -14,8 +14,8 @@ void setup()
   JsonObject shelf1 = shelves.createNestedObject();
   JsonObject shelf2 = shelves.createNestedObject();
 
-  shelf1["shelfId"] = "shelf 1";
-  shelf1["contents"] = 1;
+  shelf1["shelfId"] = "P60S9yHK54mJKG0nm3Jj";
+  shelf1["contents"] = 0;
   shelf1["capacity"] = 2;
 
   shelf2["shelfId"] = "shelf 2";
