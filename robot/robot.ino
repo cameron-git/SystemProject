@@ -147,12 +147,12 @@ void UpdateDirection() {
   switch (irSensors) {
 
     case B000: // no sensor detects the line
-       if (errorLast < 0) { error = -130;}
-       else if (errorLast > 0) {error = 130;}
+       if (errorLast < 0) { error = -180;}
+       else if (errorLast > 0) {error = 180;}
        break;
 
      case B100: // left sensor on the line
-       error = -80;
+       error = -120;
        break;
 
      case B110:
@@ -168,7 +168,7 @@ void UpdateDirection() {
        break;
 
      case B001: // right sensor on the line
-       error = 80;
+       error = 120;
        break;
 
      case B111:
