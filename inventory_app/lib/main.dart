@@ -38,9 +38,18 @@ class _MyAppState extends State<MyApp> {
         body: FirebaseAnimatedList(
           query: dbref,
           itemBuilder: (context, snapshot, animation, index) {
-            var sn = snapshot.value as int;
-            return ListTile(
-              title: Text(sn.toString()),
+            int contents = snapshot.child('contents').value as int;
+            int capacity = snapshot.child('capacity').value as int;
+            var arduinoId = snapshot.child('arduinoId').value.toString();
+            return Card(
+              child: ListTile(
+                title: Text(snapshot.child('shelfId').value.toString() +
+                    ": " +
+                    (contents / capacity * 100).round().toString() +
+                    "%"),
+                subtitle: Text('Current stock level: $contents/$capacity'),
+                trailing: Text('Arduino ID: $arduinoId'),
+              ),
             );
           },
         ),
