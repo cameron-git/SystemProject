@@ -1,7 +1,7 @@
 #include <ArduinoJson.h>
 #include "Firebase_Arduino_WiFiNINA.h"
 
-#define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+#define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
 #define DATABASE_SECRET "l3ONLDlbr7x1zRP7Y8a0UOA8UNH1PL6VDCilozTU"
 #define WIFI_SSID "VM7136878"
 #define WIFI_PASSWORD "dryv5qrKqsc7"
