@@ -8,28 +8,26 @@
 // #define WIFI_SSID "S10"
 // #define WIFI_PASSWORD "camerons10"
 #define ARDUINO_ID "Arduino 1"
+#define LDR_CUTOFF 300
 
 FirebaseData fbdo;
-
+int count;
+int8_t ldrPins[] = {A0, A1, A2, A3, A6, A7};
+StaticJsonDocument<512> doc;
+JsonObject shelf1 = doc.createNestedObject();
+JsonObject shelf2 = doc.createNestedObject();
 char jsonData[512];
 
 void setup()
 {
-  // Serial.begin(9600);
-  // while (!Serial)
-  // {
-  // };
+  Serial.begin(9600);
 
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 
-  StaticJsonDocument<512> doc;
-  JsonObject shelf1 = doc.createNestedObject();
-  JsonObject shelf2 = doc.createNestedObject();
-
-  shelf1["shelfId"] = "Shelf 1";
+  shelf1["shelfId"] = "LDR 1";
   shelf1["contents"] = 0;
-  shelf1["capacity"] = 2;
+  shelf1["capacity"] = 6;
   shelf1["arduinoId"] = ARDUINO_ID;
 
   shelf2["shelfId"] = "Shelf 2";
@@ -41,17 +39,47 @@ void setup()
 
   if (Firebase.setJSON(fbdo, "/", jsonData))
   {
-    // if (fbdo.dataType() == "json")
-      // Serial.println(fbdo.jsonData());
+    if (fbdo.dataType() == "json")
+      Serial.println(fbdo.jsonData());
   }
   else
   {
-    // Failed, then print out the error detail
-    // Serial.println(fbdo.errorReason());
+    Serial.println(fbdo.errorReason());
   }
 }
 
 void loop()
 {
-// Upload data on change
+  if (updateLDR())
+  {
+    serializeJson(doc, jsonData);
+    if (Firebase.setJSON(fbdo, "/", jsonData))
+    {
+      if (fbdo.dataType() == "json")
+        Serial.println(fbdo.jsonData());
+    }
+    else
+    {
+      Serial.println(fbdo.errorReason());
+    }
+  }
+  delay(200);
+}
+
+bool updateLDR()
+{
+  count = 0;
+  for (int i = 0; i < 6; i++)
+  {
+    if (analogRead(ldrPins[i]) > LDR_CUTOFF)
+    {
+      count++;
+    }
+  }
+  if (count != shelf1["contents"])
+  {
+    shelf1["contents"] = count;
+    return true;
+  }
+  return false;
 }
