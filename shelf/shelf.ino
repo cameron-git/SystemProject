@@ -8,7 +8,7 @@
 // #define WIFI_SSID "S10"
 // #define WIFI_PASSWORD "camerons10"
 #define ARDUINO_ID "Arduino 1"
-#define LDR_CUTOFF 300
+#define LDR_CUTOFF 50
 
 FirebaseData fbdo;
 int count;
