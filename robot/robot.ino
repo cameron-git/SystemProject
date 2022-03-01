@@ -1,11 +1,6 @@
 /*
 Line following control of two Bi-directional Motors
 */
-// WheelDrive - move a pair of DC motors at varying rate and direction
-//
-// Copyright (c) 2016, Garth Zeglin.  All rights reserved. Licensed under the
-// terms of the BSD 3-clause license as included in LICENSE.
-//
 // This program assumes that:
 //
 //  1. A DRV8833 dual DC motor driver module is connected to pins 5, 6, 9, and 10.
@@ -13,6 +8,9 @@ Line following control of two Bi-directional Motors
 //  3. The serial console on the Arduino IDE is set to 9600 baud communications speed.
 
 // ================================================================================
+#include <SPI.h>
+#include <MFRC522.h>
+
 // Define constant values and global variables.
 
 // Define the pin numbers on which the outputs are generated.
@@ -20,6 +18,9 @@ Line following control of two Bi-directional Motors
 #define MOT_A2_PIN 6
 #define MOT_B1_PIN 9
 #define MOT_B2_PIN 10
+
+#define RST_PIN 9
+#define SS_PIN 10
 
 boolean reverseL = 0; 
 boolean reverseR = 0;
@@ -49,6 +50,8 @@ int error = 0;
 
 int errorLast = 0;  //  store the last value of error
 
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
 
 // ================================================================================
 /// Configure the hardware once after booting up.  This runs once after pressing
@@ -68,7 +71,8 @@ void setup(void)
   digitalWrite(MOT_B2_PIN, LOW);
 
   // Initialize the serial UART at 9600 bits per second.
-  Serial.begin(9600);
+  SPI.begin();                                               // Init SPI bus
+  mfrc522.PCD_Init();                                        // Init MFRC522 card
 }
 // ================================================================================
 /// Set the current on a motor channel using PWM and directional logic.
@@ -101,12 +105,6 @@ void set_motor_currents(int pwm_A, int pwm_B)
 {
   set_motor_pwm(pwm_A, MOT_A1_PIN, MOT_A2_PIN);
   set_motor_pwm(pwm_B, MOT_B1_PIN, MOT_B2_PIN);
-
-  // Print a status message to the console.
-  Serial.print("Set motor A PWM = ");
-  Serial.print(pwm_A);
-  Serial.print(" motor B PWM = ");
-  Serial.println(pwm_B);
 }
 
 // ================================================================================
@@ -197,3 +195,46 @@ Scan();
 UpdateDirection();
 spin_and_wait(leftServoSpeed,rightServoSpeed,10); // sets speed for 0.01 sec
 }
+
+String scanRFID(){
+  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
+  MFRC522::MIFARE_Key key;
+  for (byte i = 0; i < 6; i++)
+    key.keyByte[i] = 0xFF;
+
+  //some variables we need
+  byte block;
+  byte len;
+  MFRC522::StatusCode status;
+
+  // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
+  if (!mfrc522.PICC_IsNewCardPresent())
+  {
+    return;
+  }
+
+  // Select one of the cards
+  if (!mfrc522.PICC_ReadCardSerial())
+  {
+    return;
+  }
+
+  byte buffer1[18];
+  len = 18;
+
+  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
+
+  status = mfrc522.MIFARE_Read(12, buffer1, &len);
+
+  //PRINT FIRST NAME
+  for (uint8_t i = 0; i < 16; i++)
+  {
+    Serial.write(buffer1[i]);
+  }
+  
+
+  delay(1000); //change value if you want to read cards faster
+
+  mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
+};
