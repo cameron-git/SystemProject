@@ -33,9 +33,10 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 void setup()
 {
   Serial.begin(9600);                                        // Initialize serial communications with the PC
+  while (!Serial) ;
   SPI.begin();                                               // Init SPI bus
   mfrc522.PCD_Init();                                        // Init MFRC522 card
-  Serial.println(F("Read personal data on a MIFARE PICC:")); //shows in serial that it is ready to read
+  Serial.println(F("Reading:")); //shows in serial that it is ready to read
 }
 
 //*****************************************************************************************//
@@ -66,77 +67,78 @@ void loop()
     return;
   }
 
-  Serial.println(F("**Card Detected:**"));
+  // Serial.println(F("**Card Detected:**"));
 
   //-------------------------------------------
 
-  mfrc522.PICC_DumpDetailsToSerial(&(mfrc522.uid)); //dump some details about the card
+  // mfrc522.PICC_DumpDetailsToSerial(&(mfrc522.uid)); //dump some details about the card
 
   //mfrc522.PICC_DumpToSerial(&(mfrc522.uid));      //uncomment this to see all blocks in hex
 
   //-------------------------------------------
 
-  Serial.print(F("Data: "));
+  // Serial.print(F("Data: "));
 
   byte buffer1[18];
   len = 18;
 
   //------------------------------------------- GET FIRST NAME
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Authentication failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
-  else
-    Serial.println(F("Authentication passed: "));
+  // if (status != MFRC522::STATUS_OK)
+  // {
+  //   Serial.print(F("Authentication failed: "));
+  //   Serial.println(mfrc522.GetStatusCodeName(status));
+  //   return;
+  // }
+  // else
+  //   Serial.println(F("Authentication passed: "));
 
   status = mfrc522.MIFARE_Read(12, buffer1, &len);
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Reading failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
-  else
-    Serial.println(F("Reading passed: "));
+  // if (status != MFRC522::STATUS_OK)
+  // {
+  //   Serial.print(F("Reading failed: "));
+  //   Serial.println(mfrc522.GetStatusCodeName(status));
+  //   return;
+  // }
+  // else
+  //   Serial.println(F("Reading passed: "));
 
   //PRINT FIRST NAME
   for (uint8_t i = 0; i < 16; i++)
   {
     Serial.write(buffer1[i]);
   }
+  Serial.println();
 
   //---------------------------------------- GET LAST NAME
 
-  byte buffer2[18];
+  // byte buffer2[18];
 
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 13, &key, &(mfrc522.uid)); //line 834
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Authentication failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
+  // status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 13, &key, &(mfrc522.uid)); //line 834
+  // // if (status != MFRC522::STATUS_OK)
+  // // {
+  // //   Serial.print(F("Authentication failed: "));
+  // //   Serial.println(mfrc522.GetStatusCodeName(status));
+  // //   return;
+  // // }
 
-  status = mfrc522.MIFARE_Read(13, buffer2, &len);
-  if (status != MFRC522::STATUS_OK)
-  {
-    Serial.print(F("Reading failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
+  // status = mfrc522.MIFARE_Read(13, buffer2, &len);
+  // // if (status != MFRC522::STATUS_OK)
+  // // {
+  // //   Serial.print(F("Reading failed: "));
+  // //   Serial.println(mfrc522.GetStatusCodeName(status));
+  // //   return;
+  // // }
 
-  //PRINT LAST NAME
-  for (uint8_t i = 0; i < 16; i++)
-  {
-    Serial.write(buffer2[i]);
-  }
+  // //PRINT LAST NAME
+  // for (uint8_t i = 0; i < 16; i++)
+  // {
+  //   Serial.write(buffer2[i]);
+  // }
 
   //----------------------------------------
 
-  Serial.println(F("\n**End Reading**\n"));
+  // Serial.println(F("\n**End Reading**\n"));
 
   delay(1000); //change value if you want to read cards faster
 

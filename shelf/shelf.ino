@@ -3,20 +3,21 @@
 
 #define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
 #define DATABASE_SECRET "l3ONLDlbr7x1zRP7Y8a0UOA8UNH1PL6VDCilozTU"
-#define WIFI_SSID "VM7136878"
-#define WIFI_PASSWORD "dryv5qrKqsc7"
-// #define WIFI_SSID "S10"
-// #define WIFI_PASSWORD "camerons10"
+// #define WIFI_SSID "VM7136878"
+// #define WIFI_PASSWORD "dryv5qrKqsc7"
+#define WIFI_SSID "S10"
+#define WIFI_PASSWORD "camerons10"
 #define ARDUINO_ID "Arduino 1"
-#define LDR_CUTOFF 50
+#define LDR_CUTOFF 300
 
 FirebaseData fbdo;
 int count;
-int8_t ldrPins[] = {A0, A1, A2, A3, A6, A7};
+int8_t ldrPins[] = {A0, A1, A2, A3};
 StaticJsonDocument<512> doc;
 JsonObject shelf1 = doc.createNestedObject();
 JsonObject shelf2 = doc.createNestedObject();
 char jsonData[512];
+int ldrNum = sizeof(ldrPins);
 
 void setup()
 {
@@ -27,7 +28,7 @@ void setup()
 
   shelf1["shelfId"] = "LDR 1";
   shelf1["contents"] = 0;
-  shelf1["capacity"] = 6;
+  shelf1["capacity"] = ldrNum;
   shelf1["arduinoId"] = ARDUINO_ID;
 
   shelf2["shelfId"] = "Shelf 2";
@@ -69,9 +70,9 @@ void loop()
 bool updateLDR()
 {
   count = 0;
-  for (int i = 0; i < 6; i++)
+  for (int i = 0; i < ldrNum; i++)
   {
-    if (analogRead(ldrPins[i]) > LDR_CUTOFF)
+    if (analogRead(ldrPins[i]) < LDR_CUTOFF)
     {
       count++;
     }

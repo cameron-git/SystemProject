@@ -32,6 +32,7 @@ MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 void setup()
 {
     Serial.begin(9600); // Initialize serial communications with the PC
+    while (!Serial) ;
     SPI.begin();        // Init SPI bus
     mfrc522.PCD_Init(); // Init MFRC522 card
     Serial.println(F("Write personal data on a MIFARE PICC "));
@@ -67,7 +68,7 @@ void loop()
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     Serial.println(mfrc522.PICC_GetTypeName(piccType));
 
-    byte buffer[34];
+    byte buffer[16];
     byte block;
     MFRC522::StatusCode status;
     byte len;
@@ -75,8 +76,8 @@ void loop()
     Serial.setTimeout(20000L); // wait until 20 seconds for input from serial
     // Ask personal data: Family name
     Serial.println(F("Enter data to write :"));
-    len = Serial.readBytesUntil('\n', (char *)buffer, 32); // read family name from serial
-    for (byte i = len; i < 32; i++)
+    len = Serial.readBytesUntil('\n', (char *)buffer, 16); // read family name from serial
+    for (byte i = len; i < 16; i++)
         buffer[i] = ' '; // pad with spaces
 
     // Writing block 1
@@ -99,25 +100,7 @@ void loop()
         return;
     }
 
-    // Writing block 2
-    block = 13;
-    //Serial.println(F("Authenticating using key A..."));
-    status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
-    if (status != MFRC522::STATUS_OK)
-    {
-        Serial.print(F("PCD_Authenticate() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
-        return;
-    }
-
-    // Write block
-    status = mfrc522.MIFARE_Write(block, &buffer[16], 16);
-    if (status != MFRC522::STATUS_OK)
-    {
-        Serial.print(F("MIFARE_Write() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
-        return;
-    }
+    
 
     Serial.println(" ");
     mfrc522.PICC_HaltA();      // Halt PICC
