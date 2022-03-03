@@ -1,4 +1,21 @@
 /*
+pin wiring:
+
+2 motor ain1
+3 motor ain2
+5 motor bin1
+6 motor bin2
+9 rfid reset
+10 rfid sda
+11 rfid mosi
+12 rfid miso
+13 rfid sck
+17 servo pwm
+18 lidar sda
+19 lidar scl
+ */
+
+/*
 Line following control of two Bi-directional Motors
 */
 // This program assumes that:
@@ -14,15 +31,15 @@ Line following control of two Bi-directional Motors
 // Define constant values and global variables.
 
 // Define the pin numbers on which the outputs are generated.
-#define MOT_A1_PIN 5
-#define MOT_A2_PIN 6
-#define MOT_B1_PIN 9
-#define MOT_B2_PIN 10
+#define MOT_A1_PIN 2
+#define MOT_A2_PIN 3
+#define MOT_B1_PIN 5
+#define MOT_B2_PIN 6
 
 #define RST_PIN 9
 #define SS_PIN 10
 
-boolean reverseL = 0; 
+boolean reverseL = 0;
 boolean reverseR = 0;
 
 /* variables to keep track of current speed of motors */
@@ -30,13 +47,12 @@ int leftServoSpeed = 0;
 int rightServoSpeed = 0;
 
 /* Define the pins for the IR sensors */
-const int irPins[3] = {A5, A4, A3};
+const int irPins[3] = {A1, A2, A3};
 
 /* Define values for the IR Sensor readings */
 int irSensorDigital[3] = {0, 0, 0};
 
 int threshold = 500; // IR sensor threshold value for line detection
-
 
 const int maxSpeed = 180; // the range for speed is(0,255)
 
@@ -48,16 +64,21 @@ int irSensors = B000;
 // Negative means the robot is left of the line.
 int error = 0;
 
-int errorLast = 0;  //  store the last value of error
+int errorLast = 0; //  store the last value of error
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
-
+char *targetShelf;
+bool onTarget;
 
 // ================================================================================
 /// Configure the hardware once after booting up.  This runs once after pressing
 //// reset or powering up the board.
 void setup(void)
 {
+  Serial.begin(9600);
+  while (!Serial)
+    ;
+
   // Initialize the stepper driver control pins to output drive mode.
   pinMode(MOT_A1_PIN, OUTPUT);
   pinMode(MOT_A2_PIN, OUTPUT);
@@ -71,9 +92,65 @@ void setup(void)
   digitalWrite(MOT_B2_PIN, LOW);
 
   // Initialize the serial UART at 9600 bits per second.
-  SPI.begin();                                               // Init SPI bus
-  mfrc522.PCD_Init();                                        // Init MFRC522 card
+  SPI.begin();        // Init SPI bus
+  mfrc522.PCD_Init(); // Init MFRC522 card
+  onTarget = false;
 }
+void loop()
+{
+  targetShelf = "tag2            ";
+
+  if (!onTarget)
+  {
+    onTarget = scanRFID();
+    // scan_IR();
+    // UpdateDirection();
+    // spin_and_wait(leftServoSpeed, rightServoSpeed, 10); // sets speed for 0.01 sec
+  }
+  delay(500);
+}
+
+bool scanRFID()
+{
+  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
+  MFRC522::MIFARE_Key key;
+  for (byte i = 0; i < 6; i++)
+    key.keyByte[i] = 0xFF;
+
+  // some variables we need
+  byte block;
+  byte len;
+  MFRC522::StatusCode status;
+
+  // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
+  if (!mfrc522.PICC_IsNewCardPresent())
+  {
+    return false;
+  }
+
+  // Select one of the cards
+  if (!mfrc522.PICC_ReadCardSerial())
+  {
+    return false;
+  }
+
+  byte buffer1[18];
+  len = 18;
+
+  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
+
+  status = mfrc522.MIFARE_Read(12, buffer1, &len);
+
+  mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
+
+  if (memcmp(buffer1, targetShelf, 16) == 0)
+  {
+    return true;
+  }
+  return false;
+};
+
 // ================================================================================
 /// Set the current on a motor channel using PWM and directional logic.
 /// Changing the current will affect the motor speed, but please note this is
@@ -86,11 +163,13 @@ void setup(void)
 
 void set_motor_pwm(int pwm, int IN1_PIN, int IN2_PIN)
 {
-  if (pwm < 0) {  // reverse speeds
+  if (pwm < 0)
+  { // reverse speeds
     analogWrite(IN1_PIN, -pwm);
     digitalWrite(IN2_PIN, LOW);
-
-  } else { // stop or forward
+  }
+  else
+  { // stop or forward
     digitalWrite(IN1_PIN, LOW);
     analogWrite(IN2_PIN, pwm);
   }
@@ -119,122 +198,85 @@ void spin_and_wait(int pwm_A, int pwm_B, int duration)
   delay(duration);
 }
 
-void Scan() {
+void scan_IR()
+{
   // Initialize the sensors
-    irSensors = B000;
+  irSensors = B000;
 
-  for (int i = 0; i < 3; i++) {
-      int sensorValue = analogRead(irPins[i]);
-      if (sensorValue >= threshold) {
-        irSensorDigital[i] = 1;
-      }
+  for (int i = 0; i < 3; i++)
+  {
+    int sensorValue = analogRead(irPins[i]);
+    if (sensorValue >= threshold)
+    {
+      irSensorDigital[i] = 1;
+    }
 
-    else {
+    else
+    {
       irSensorDigital[i] = 0;
     }
 
-    int b = 2-i;
-    irSensors = irSensors + (irSensorDigital[i]<<b);
-    }
+    int b = 2 - i;
+    irSensors = irSensors + (irSensorDigital[i] << b);
+  }
 }
 
-void UpdateDirection() {
+void UpdateDirection()
+{
 
   errorLast = error;
 
-  switch (irSensors) {
+  switch (irSensors)
+  {
 
-    case B000: // no sensor detects the line
-       if (errorLast < 0) { error = -180;}
-       else if (errorLast > 0) {error = 180;}
-       break;
-
-     case B100: // left sensor on the line
-       error = -120;
-       break;
-
-     case B110:
-       error = -40;
-       break;
-
-     case B010:
-       error = 0;
-       break;
-
-     case B011:
-       error = 40;
-       break;
-
-     case B001: // right sensor on the line
-       error = 120;
-       break;
-
-     case B111:
-       error = 1;
-       break;
-
-     default:
-       error = errorLast;
-  }
-
-    if (error >= 0) {
-      leftServoSpeed = maxSpeed;
-      rightServoSpeed = maxSpeed - error;
+  case B000: // no sensor detects the line
+    if (errorLast < 0)
+    {
+      error = -180;
     }
-
-    else if (error < 0) {
-      leftServoSpeed = maxSpeed + error;
-      rightServoSpeed = maxSpeed;
+    else if (errorLast > 0)
+    {
+      error = 180;
     }
+    break;
+
+  case B100: // left sensor on the line
+    error = -120;
+    break;
+
+  case B110:
+    error = -40;
+    break;
+
+  case B010:
+    error = 0;
+    break;
+
+  case B011:
+    error = 40;
+    break;
+
+  case B001: // right sensor on the line
+    error = 120;
+    break;
+
+  case B111:
+    error = 1;
+    break;
+
+  default:
+    error = errorLast;
+  }
+
+  if (error >= 0)
+  {
+    leftServoSpeed = maxSpeed;
+    rightServoSpeed = maxSpeed - error;
+  }
+
+  else if (error < 0)
+  {
+    leftServoSpeed = maxSpeed + error;
+    rightServoSpeed = maxSpeed;
+  }
 }
-
-
-void loop()
-{
-Scan();
-UpdateDirection();
-spin_and_wait(leftServoSpeed,rightServoSpeed,10); // sets speed for 0.01 sec
-}
-
-String scanRFID(){
-  // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
-  MFRC522::MIFARE_Key key;
-  for (byte i = 0; i < 6; i++)
-    key.keyByte[i] = 0xFF;
-
-  //some variables we need
-  byte block;
-  byte len;
-  MFRC522::StatusCode status;
-
-  // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-  if (!mfrc522.PICC_IsNewCardPresent())
-  {
-    return;
-  }
-
-  // Select one of the cards
-  if (!mfrc522.PICC_ReadCardSerial())
-  {
-    return;
-  }
-
-  byte buffer1[18];
-  len = 18;
-
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
-
-  status = mfrc522.MIFARE_Read(12, buffer1, &len);
-
-  //PRINT FIRST NAME
-  for (uint8_t i = 0; i < 16; i++)
-  {
-    Serial.write(buffer1[i]);
-  }
-  
-
-  delay(1000); //change value if you want to read cards faster
-
-  mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
-};
