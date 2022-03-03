@@ -10,9 +10,13 @@ pin wiring:
 11 rfid mosi
 12 rfid miso
 13 rfid sck
+14 ir1
+15 ir2
+16 ir3
 17 servo pwm
 18 lidar sda
 19 lidar scl
+21 buzzer
  */
 
 /*
