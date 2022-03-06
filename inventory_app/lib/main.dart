@@ -1,6 +1,7 @@
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'firebase_options.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -21,29 +22,64 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  DatabaseReference dbref = FirebaseDatabase.instanceFor(
+  DatabaseReference listref = FirebaseDatabase.instanceFor(
           app: Firebase.app(),
           databaseURL:
               'systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app')
       .ref();
+  String barcodeScanRes = '';
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'app',
+      title: 'RobotInventory',
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Inventory'),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                // Todo: Search db for product with this code
+                barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+                    "#ff6666", "Cancel", false, ScanMode.BARCODE);
+
+                listref.set(
+                  {
+                    'code': barcodeScanRes,
+                    'newCode': true,
+                  },
+                );
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text('Sending robot to $barcodeScanRes'),
+                        actions: [
+                          TextButton(
+                            child: const Text('Ok'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    });
+              },
+              icon: const Icon(
+                Icons.qr_code_scanner_rounded,
+              ),
+            ),
+          ],
         ),
         body: FirebaseAnimatedList(
-          query: dbref,
+          query: listref,
           itemBuilder: (context, snapshot, animation, index) {
-            int contents = snapshot.child('contents').value as int;
-            int capacity = snapshot.child('capacity').value as int;
-            var arduinoId = snapshot.child('arduinoId').value.toString();
+            int contents = snapshot.child('locs/contents').value as int;
+            int capacity = snapshot.child('locs/capacity').value as int;
+            var arduinoId = snapshot.child('locs/arduinoId').value.toString();
             return Card(
               child: ListTile(
-                title: Text(snapshot.child('shelfId').value.toString() +
+                title: Text(snapshot.child('locs/shelfId').value.toString() +
                     ": " +
                     (contents / capacity * 100).round().toString() +
                     "%"),

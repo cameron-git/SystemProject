@@ -1,5 +1,5 @@
 #include <ArduinoJson.h>
-#include "Firebase_Arduino_WiFiNINA.h"
+#include <Firebase_Arduino_WiFiNINA.h>
 
 #define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
 #define DATABASE_SECRET "l3ONLDlbr7x1zRP7Y8a0UOA8UNH1PL6VDCilozTU"
@@ -38,7 +38,7 @@ void setup()
 
   serializeJson(doc, jsonData);
 
-  if (Firebase.setJSON(fbdo, "/", jsonData))
+  if (Firebase.setJSON(fbdo, "/locs/", jsonData))
   {
     if (fbdo.dataType() == "json")
       Serial.println(fbdo.jsonData());
@@ -54,7 +54,7 @@ void loop()
   if (updateLDR())
   {
     serializeJson(doc, jsonData);
-    if (Firebase.setJSON(fbdo, "/", jsonData))
+    if (Firebase.setJSON(fbdo, "/locs/", jsonData))
     {
       if (fbdo.dataType() == "json")
         Serial.println(fbdo.jsonData());
