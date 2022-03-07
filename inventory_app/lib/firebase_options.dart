@@ -52,6 +52,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '212105992725',
     projectId: 'systemprojectgroup1',
     storageBucket: 'systemprojectgroup1.appspot.com',
+    databaseURL:
+        'https://systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app/',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -60,7 +62,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '212105992725',
     projectId: 'systemprojectgroup1',
     storageBucket: 'systemprojectgroup1.appspot.com',
-    iosClientId: '212105992725-qc5r2fae9jqlg1up6s31rdd6q6nginvs.apps.googleusercontent.com',
+    iosClientId:
+        '212105992725-qc5r2fae9jqlg1up6s31rdd6q6nginvs.apps.googleusercontent.com',
     iosBundleId: 'com.example.app',
   );
 }
