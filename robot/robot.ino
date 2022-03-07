@@ -29,10 +29,18 @@ Line following control of two Bi-directional Motors
 //  3. The serial console on the Arduino IDE is set to 9600 baud communications speed.
 
 // ================================================================================
-#include <SPI.h>
-#include <MFRC522.h>
+#include "SPI.h"
+#include "MFRC522.h"
+#include "Firebase_Arduino_WiFiNINA.h"
 
 // Define constant values and global variables.
+
+#define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
+#define DATABASE_SECRET "l3ONLDlbr7x1zRP7Y8a0UOA8UNH1PL6VDCilozTU"
+// #define WIFI_SSID "VM7136878"
+// #define WIFI_PASSWORD "dryv5qrKqsc7"
+#define WIFI_SSID "S10"
+#define WIFI_PASSWORD "camerons10"
 
 // Define the pin numbers on which the outputs are generated.
 #define MOT_A1_PIN 2
@@ -74,6 +82,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 char *targetShelf;
 bool onTarget;
 
+FirebaseData fbdo;
+
 // ================================================================================
 /// Configure the hardware once after booting up.  This runs once after pressing
 //// reset or powering up the board.
@@ -82,6 +92,14 @@ void setup(void)
   Serial.begin(9600);
   while (!Serial)
     ;
+  Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
+  Firebase.reconnectWiFi(true);
+
+  if (!Firebase.beginStream(fbdo, "/barcode"))
+  {
+    // Could not begin stream connection, then print out the error detail
+    Serial.println(fbdo.errorReason());
+  }
 
   // Initialize the stepper driver control pins to output drive mode.
   pinMode(MOT_A1_PIN, OUTPUT);
@@ -102,15 +120,37 @@ void setup(void)
 }
 void loop()
 {
-  targetShelf = "tag2            ";
-
-  if (!onTarget)
+  if (!Firebase.readStream(fbdo))
   {
-    onTarget = scanRFID();
-    // scan_IR();
-    // UpdateDirection();
-    // spin_and_wait(leftServoSpeed, rightServoSpeed, 10); // sets speed for 0.01 sec
+    Serial.println(fbdo.errorReason());
   }
+
+  if (fbdo.streamTimeout())
+  {
+    Serial.println("Stream timeout, resume streaming...");
+  }
+
+  if (fbdo.streamAvailable())
+  {
+    if (fbdo.dataType() == "string")
+    {
+      Serial.println("String: " + fbdo.stringData());
+      targetShelf = fbdo.stringData();
+      while (!onTarget)
+      {
+        onTarget = scanRFID();
+        // Add LIDAR Code here
+        scan_IR();
+        UpdateDirection();
+        spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
+      }
+    }
+    else
+    {
+      Serial.println("Unexpected datatype in Firebase Stream");
+    }
+  }
+
   delay(500);
 }
 
@@ -138,17 +178,16 @@ bool scanRFID()
     return false;
   }
 
-  byte buffer1[18];
-  len = 18;
+  byte buffer1[6];
+  len = 6;
 
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
+  // status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, 12, &key, &(mfrc522.uid));
 
-  status = mfrc522.MIFARE_Read(12, buffer1, &len);
+  status = mfrc522.MIFARE_Read(6, buffer1, &len); // change page address for new chips
 
   mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
 
-  if (memcmp(buffer1, targetShelf, 16) == 0)
+  if (memcmp(buffer1, targetShelf, 4) == 0)
   {
     return true;
   }
