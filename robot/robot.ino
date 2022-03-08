@@ -135,7 +135,7 @@ void loop()
     if (fbdo.dataType() == "string")
     {
       Serial.println("String: " + fbdo.stringData());
-      targetShelf = fbdo.stringData();
+      fbdo.stringData().toCharArray(targetShelf,sizeof(targetShelf));
       while (!onTarget)
       {
         onTarget = scanRFID();
@@ -163,7 +163,7 @@ bool scanRFID()
 
   // some variables we need
   byte block;
-  byte len;
+  byte len; 
   MFRC522::StatusCode status;
 
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.

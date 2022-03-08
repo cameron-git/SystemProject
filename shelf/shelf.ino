@@ -23,6 +23,8 @@ void setup()
 {
   Serial.begin(9600);
 
+  while (!Serial)
+    ;
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 

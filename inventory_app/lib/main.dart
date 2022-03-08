@@ -64,14 +64,14 @@ class _MyAppState extends State<MyApp> {
         ],
       ),
       body: FirebaseAnimatedList(
-        query: listref,
+        query: listref.child('locs'),
         itemBuilder: (context, snapshot, animation, index) {
-          int contents = snapshot.child('locs/contents').value as int;
-          int capacity = snapshot.child('locs/capacity').value as int;
-          var arduinoId = snapshot.child('locs/arduinoId').value.toString();
+          int contents = snapshot.child('contents').value as int;
+          int capacity = snapshot.child('capacity').value as int;
+          var arduinoId = snapshot.child('arduinoId').value.toString();
           return Card(
             child: ListTile(
-              title: Text(snapshot.child('locs/shelfId').value.toString() +
+              title: Text(snapshot.child('shelfId').value.toString() +
                   ": " +
                   (contents / capacity * 100).round().toString() +
                   "%"),

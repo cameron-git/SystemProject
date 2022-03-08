@@ -44,6 +44,8 @@ class DefaultFirebaseOptions {
     projectId: 'systemprojectgroup1',
     authDomain: 'systemprojectgroup1.firebaseapp.com',
     storageBucket: 'systemprojectgroup1.appspot.com',
+    databaseURL:
+        'https://systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app/',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -65,5 +67,7 @@ class DefaultFirebaseOptions {
     iosClientId:
         '212105992725-qc5r2fae9jqlg1up6s31rdd6q6nginvs.apps.googleusercontent.com',
     iosBundleId: 'com.example.app',
+    databaseURL:
+        'https://systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app/',
   );
 }
