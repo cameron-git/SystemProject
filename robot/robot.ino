@@ -47,7 +47,7 @@ boolean reverseL = 0;
 boolean reverseR = 0;
 int leftServoSpeed = 0;
 int rightServoSpeed = 0;
-const int irPins[3] = {A1, A2, A3};
+const int irPins[3] = {A0, A1, A2};
 int irSensorDigital[3] = {0, 0, 0};
 int threshold = 500;
 const int maxSpeed = 180;
@@ -70,7 +70,7 @@ FirebaseData fbdo;
 void setup(void)
 {
   Serial.begin(9600);
-  delay(1000);
+  // delay(1000);
 
   // Firebase setup
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
@@ -92,7 +92,7 @@ void setup(void)
 }
 void loop()
 {
-  delay(3000);
+  // delay(2000);
   if (Firebase.getString(fbdo, "/barcode"))
   {
     if (fbdo.dataType() == "string")
@@ -111,12 +111,12 @@ void loop()
         onTarget = false;
         while (!onTarget)
         {
-          Serial.print(".");
+          Serial.println("---");
           onTarget = scanRFID();
           // Add LIDAR and buzzer code here
           scan_IR();
           UpdateDirection();
-          spin_and_wait(leftServoSpeed, rightServoSpeed, 0);
+          spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
         }
         spin_and_wait(0, 0, 0);
         Serial.println("On rfid");
@@ -178,6 +178,7 @@ void set_motor_pwm(int pwm, int IN1_PIN, int IN2_PIN)
 
 void set_motor_currents(int pwm_A, int pwm_B)
 {
+
   set_motor_pwm(pwm_A, MOT_A1_PIN, MOT_A2_PIN);
   set_motor_pwm(pwm_B, MOT_B1_PIN, MOT_B2_PIN);
 }
@@ -194,6 +195,8 @@ void scan_IR()
   for (int i = 0; i < 3; i++)
   {
     int sensorValue = analogRead(irPins[i]);
+    // Serial.print(sensorValue);
+    // Serial.print(" ");
     if (sensorValue >= threshold)
     {
       irSensorDigital[i] = 1;
@@ -205,6 +208,7 @@ void scan_IR()
     int b = 2 - i;
     irSensors = irSensors + (irSensorDigital[i] << b);
   }
+  // Serial.println();
 }
 
 void UpdateDirection()
