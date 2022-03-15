@@ -56,7 +56,7 @@ int rightServoSpeed = 0;
 const int irPins[3] = {A0, A1, A2};
 int irSensorDigital[3] = {0, 0, 0};
 int threshold = 500;
-const int maxSpeed = 180;
+const int maxSpeed = 140;
 int irSensors = 0b000;
 int error = 0;
 int errorLast = 0;
@@ -76,6 +76,7 @@ FirebaseData fbdo;
 // LIDAR vars
 VL53L1X sensor;
 Servo myservo;
+u_int16_t dist;
 
 void setup(void)
 {
@@ -111,8 +112,8 @@ void setup(void)
       ;
   }
   sensor.setDistanceMode(VL53L1X::Short);
-  sensor.setMeasurementTimingBudget(140000);
-  sensor.startContinuous(140);
+  sensor.setMeasurementTimingBudget(60000);
+  sensor.startContinuous(60);
   myservo.attach(SERVO_PIN);
   pinMode(BUZZER_PIN, OUTPUT);
 }
@@ -137,24 +138,25 @@ void loop()
         onTarget = false;
         while (!onTarget)
         {
-          myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
-          if (sensor.read() < 200)
+          dist = sensor.read(false);
+          if (dist < 200 && dist > 0)
           {
-            set_motor_currents(0, 0);
-            tone(BUZZER_PIN, 1000);
-            while (sensor.read() < 200)
-            {
-              myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
-            }
-            notone(BUZZER_PIN);
+            // tone(BUZZER_PIN, 200);
+            spin_and_wait(0, 0, 300);
           }
+          else
+          {
+            // noTone(BUZZER_PIN);
+            myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
 
-          Serial.println("---");
-          onTarget = scanRFID();
-          // Add LIDAR and buzzer code here
-          scan_IR();
-          UpdateDirection();
-          spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
+            Serial.println("---");
+            onTarget = scanRFID();
+            // Add LIDAR and buzzer code here
+            scan_IR();
+            UpdateDirection();
+            // spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
+            set_motor_currents(leftServoSpeed, rightServoSpeed);
+          }
         }
         set_motor_currents(0, 0);
         Serial.println("On rfid");
@@ -257,20 +259,20 @@ void UpdateDirection()
   case 0b000: // no sensor detects the line
     if (errorLast < 0)
     {
-      error = -180;
+      error = -maxSpeed;
     }
     else if (errorLast > 0)
     {
-      error = 180;
+      error = maxSpeed;
     }
     break;
 
   case 0b100: // left sensor on the line
-    error = -120;
+    error = -maxSpeed / 2;
     break;
 
   case 0b110:
-    error = -40;
+    error = -maxSpeed / 5;
     break;
 
   case 0b010:
@@ -278,15 +280,15 @@ void UpdateDirection()
     break;
 
   case 0b011:
-    error = 40;
+    error = maxSpeed / 5;
     break;
 
   case 0b001: // right sensor on the line
-    error = 120;
+    error = maxSpeed / 2;
     break;
 
   case 0b111:
-    error = 1;
+    error = 0;
     break;
 
   default:
