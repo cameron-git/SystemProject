@@ -20,9 +20,12 @@ pin wiring:
  */
 
 // Libraries
-#include "SPI.h"
-#include "MFRC522.h"
-#include "Firebase_Arduino_WiFiNINA.h"
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Firebase_Arduino_WiFiNINA.h>
+#include <Wire.h>
+#include <VL53L1X.h>
+#include <Servo.h>
 
 // Firebase and WIFI defs
 #define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
@@ -41,6 +44,9 @@ pin wiring:
 // RFID defs
 #define RST_PIN 9
 #define SS_PIN 10
+
+#define SERVO_PIN A3
+#define BUZZER_PIN 21
 
 // Line following vars
 boolean reverseL = 0;
@@ -67,6 +73,10 @@ char lastShelf[8];
 bool onTarget;
 FirebaseData fbdo;
 
+// LIDAR vars
+VL53L1X sensor;
+Servo myservo;
+
 void setup(void)
 {
   Serial.begin(9600);
@@ -89,6 +99,22 @@ void setup(void)
   // RFID setup
   SPI.begin();
   mfrc522.PCD_Init();
+
+  // Obstacle avoidance setup
+  Wire.begin();
+  Wire.setClock(400000);
+  sensor.setTimeout(500);
+  if (!sensor.init())
+  {
+    Serial.println("Failed to detect and initialize sensor!");
+    while (1)
+      ;
+  }
+  sensor.setDistanceMode(VL53L1X::Short);
+  sensor.setMeasurementTimingBudget(140000);
+  sensor.startContinuous(140);
+  myservo.attach(SERVO_PIN);
+  pinMode(BUZZER_PIN, OUTPUT);
 }
 void loop()
 {
@@ -111,6 +137,18 @@ void loop()
         onTarget = false;
         while (!onTarget)
         {
+          myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
+          if (sensor.read() < 200)
+          {
+            set_motor_currents(0, 0);
+            tone(BUZZER_PIN, 1000);
+            while (sensor.read() < 200)
+            {
+              myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
+            }
+            notone(BUZZER_PIN);
+          }
+
           Serial.println("---");
           onTarget = scanRFID();
           // Add LIDAR and buzzer code here
@@ -118,7 +156,7 @@ void loop()
           UpdateDirection();
           spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
         }
-        spin_and_wait(0, 0, 0);
+        set_motor_currents(0, 0);
         Serial.println("On rfid");
       }
     }

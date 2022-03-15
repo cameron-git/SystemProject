@@ -42,20 +42,21 @@ class _MyAppState extends State<MyApp> {
                 },
               );
               showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: Text('Sending robot to $barcodeScanRes'),
-                      actions: [
-                        TextButton(
-                          child: const Text('Ok'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  });
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text('Sending robot to $barcodeScanRes'),
+                    actions: [
+                      TextButton(
+                        child: const Text('Ok'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             icon: const Icon(
               Icons.qr_code_scanner_rounded,
