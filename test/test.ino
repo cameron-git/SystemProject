@@ -1,52 +1,52 @@
-#include "SPI.h"
-#include "MFRC522.h"
+/*
+This example shows how to take simple range measurements with the VL53L1X. The
+range readings are in units of mm.
+*/
 
-#define RST_PIN 9
-#define SS_PIN 10
+#include <Wire.h>
+#include <VL53L1X.h>
 
-MFRC522 mfrc522(SS_PIN, RST_PIN);
-
-MFRC522::StatusCode status;
-
-byte buffer[18];
-byte len = sizeof(buffer);
+VL53L1X sensor;
 
 void setup()
 {
-  Serial.begin(9600);
-  while (!Serial)
-    ;
-  SPI.begin(); // Init SPI bus
-  mfrc522.PCD_Init();
-  Serial.println("Looking...");
+    while (!Serial)
+    {
+    }
+    Serial.begin(9600);
+    Wire.begin();
+    Wire.setClock(400000); // use 400 kHz I2C
+
+    sensor.setTimeout(500);
+    if (!sensor.init())
+    {
+        Serial.println("Failed to detect and initialize sensor!");
+        while (1)
+            ;
+    }
+
+    // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
+    // You can change these settings to adjust the performance of the sensor, but
+    // the minimum timing budget is 20 ms for short distance mode and 33 ms for
+    // medium and long distance modes. See the VL53L1X datasheet for more
+    // information on range and timing limits.
+    sensor.setDistanceMode(VL53L1X::Long);
+    sensor.setMeasurementTimingBudget(50000);
+
+    // Start continuous readings at a rate of one measurement every 50 ms (the
+    // inter-measurement period). This period should be at least as long as the
+    // timing budget.
+    sensor.startContinuous(50);
 }
 
 void loop()
 {
-  if (!mfrc522.PICC_IsNewCardPresent())
-  {
-    return;
-  }
-  Serial.println("1");
-  if (!mfrc522.PICC_ReadCardSerial())
-  {
-    return;
-  }
-  Serial.println("2");
+    Serial.print(sensor.read());
+    Serial.println("I get here");
+    if (sensor.timeoutOccurred())
+    {
+        Serial.print(" TIMEOUT");
+    }
 
-  status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(4, buffer, &len);
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print(F("MIFARE_Read() failed: "));
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return;
-  }
-  Serial.println("3");
-
-  for (uint8_t i = 0; i < 4; i++) {
-    Serial.write(buffer[i]);
-  }
-  Serial.println();
-
-  mfrc522.PICC_HaltA();
-  delay(500);
+    Serial.println();
 }

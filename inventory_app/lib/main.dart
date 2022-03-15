@@ -36,7 +36,7 @@ class _MyAppState extends State<MyApp> {
               // Todo: Search db for product with this code
               barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
                   "#ff6666", "Cancel", false, ScanMode.BARCODE);
-              await listref.set(
+              await listref.update(
                 {
                   'barcode': barcodeScanRes,
                 },
