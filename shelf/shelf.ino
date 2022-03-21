@@ -1,8 +1,14 @@
 #include "ArduinoJson.h"
 #include "Firebase_Arduino_WiFiNINA.h"
+#include "HX711.h"
+
+#define LOADCELL_DOUT_PIN 2
+#define LOADCELL_SCK_PIN 3
+#define TARE_PIN 4
+#define CALIBRATE_PIN 5
 
 #define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
-#define DATABASE_SECRET "l3ONLDlbr7x1zRP7Y8a0UOA8UNH1PL6VDCilozTU"
+#define DATABASE_SECRET "kNyRYqXGdkTOw2WDaNOmgNiL4yQaJGoImAPHFr9C"
 // #define WIFI_SSID "VM7136878"
 // #define WIFI_PASSWORD "dryv5qrKqsc7"
 #define WIFI_SSID "S10"
@@ -11,31 +17,42 @@
 #define LDR_CUTOFF 300
 
 FirebaseData fbdo;
-int count;
+int count, scaleReading;
 int8_t ldrPins[] = {A0, A1, A2, A3};
 StaticJsonDocument<512> doc;
 JsonObject shelf1 = doc.createNestedObject();
 JsonObject shelf2 = doc.createNestedObject();
 char jsonData[512];
 int ldrNum = sizeof(ldrPins);
+HX711 scale;
+float calibration_factor = 7050;
 
 void setup()
 {
   Serial.begin(9600);
 
-  while (!Serial)
-    ;
+  delay(1000);
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 
-  shelf1["shelfId"] = "LDR 1";
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.set_scale(400);
+  scale.tare();
+  pinMode(TARE_PIN, INPUT);
+  pinMode(CALIBRATE_PIN, INPUT);
+
+  shelf1["shelfId"] = "Shelf 1";
+  shelf1["barcode"] = "0001";
   shelf1["contents"] = 0;
   shelf1["capacity"] = ldrNum;
+  shelf1["type"] = "ldr";
   shelf1["arduinoId"] = ARDUINO_ID;
 
   shelf2["shelfId"] = "Shelf 2";
+  shelf2["barcode"] = "0002";
   shelf2["contents"] = 0;
-  shelf2["capacity"] = 3;
+  shelf2["capacity"] = 0;
+  shelf2["type"] = "scale";
   shelf2["arduinoId"] = ARDUINO_ID;
 
   serializeJson(doc, jsonData);
@@ -53,7 +70,22 @@ void setup()
 
 void loop()
 {
-  if (updateLDR())
+  if (digitalRead(TARE_PIN) == HIGH)
+  {
+    scale.tare();
+    while (digitalRead(TARE_PIN) == HIGH)
+      ;
+    return;
+  }
+  if (digitalRead(CALIBRATE_PIN) == HIGH)
+  {
+    calibrateScale();
+    while (digitalRead(CALIBRATE_PIN) == HIGH)
+      ;
+    return;
+  }
+
+  if (updateLDR() || updateScale())
   {
     serializeJson(doc, jsonData);
     if (Firebase.setJSON(fbdo, "/locs/", jsonData))
@@ -66,7 +98,7 @@ void loop()
       Serial.println(fbdo.errorReason());
     }
   }
-  delay(200);
+  delay(1000);
 }
 
 bool updateLDR()
@@ -85,4 +117,21 @@ bool updateLDR()
     return true;
   }
   return false;
+}
+
+bool updateScale()
+{
+  scaleReading = (int)scale.get_units(10);
+  if (scaleReading != shelf2["contents"])
+  {
+    shelf2["contents"] = scaleReading;
+    return true;
+  }
+  return false;
+}
+
+void calibrateScale()
+{
+  scaleReading = scale.read_average();
+  scale.set_scale(scaleReading);
 }

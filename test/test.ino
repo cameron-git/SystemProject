@@ -42,11 +42,13 @@ HX711 scale;
 
 int choice = 0;
 
-float calibration_factor = 7050; //-7050 worked for my 440lb max scale setup
+float calibration_factor = 400; //-7050 worked for my 440lb max scale setup
 
 void setup()
 {
     Serial.begin(9600);
+    while (!Serial)
+        ;
     Serial.println("HX711 calibration sketch");
     Serial.println("Remove all weight from scale");
     Serial.println("After readings begin, place known weight on scale");
@@ -77,6 +79,7 @@ void loop()
     if (Serial.available())
     {
         choice = Serial.parseInt();
+        scale.tare();
         if (choice != 0)
         {
             Serial.println(choice);

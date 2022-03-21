@@ -116,6 +116,7 @@ void setup(void)
   sensor.startContinuous(60);
   myservo.attach(SERVO_PIN);
   pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
 }
 void loop()
 {
@@ -141,12 +142,12 @@ void loop()
           dist = sensor.read(false);
           if (dist < 200 && dist > 0)
           {
-            // tone(BUZZER_PIN, 200);
+            digitalWrite(BUZZER_PIN, HIGH);
             spin_and_wait(0, 0, 300);
           }
           else
           {
-            // noTone(BUZZER_PIN);
+            digitalWrite(BUZZER_PIN, LOW);
             myservo.write((int)(90 + 20 * sin(6.28 * millis() / 1000)));
 
             Serial.println("---");
@@ -154,7 +155,6 @@ void loop()
             // Add LIDAR and buzzer code here
             scan_IR();
             UpdateDirection();
-            // spin_and_wait(leftServoSpeed, rightServoSpeed, 10);
             set_motor_currents(leftServoSpeed, rightServoSpeed);
           }
         }

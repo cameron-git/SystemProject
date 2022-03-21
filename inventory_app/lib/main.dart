@@ -11,7 +11,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MaterialApp(title: 'RobotInventory', home: MyApp()));
+  runApp(const MaterialApp(
+    title: 'RobotInventory',
+    home: MyApp(),
+    debugShowCheckedModeBanner: false,
+  ));
 }
 
 class MyApp extends StatefulWidget {
@@ -31,6 +35,26 @@ class _MyAppState extends State<MyApp> {
       appBar: AppBar(
         title: const Text('Inventory'),
         actions: [
+          IconButton(
+            onPressed: () async {
+              await listref.update(
+                {
+                  'barcode': 'stop',
+                },
+              );
+            },
+            icon: const Icon(Icons.not_interested),
+          ),
+          IconButton(
+            onPressed: () async {
+              await listref.update(
+                {
+                  'barcode': '0000',
+                },
+              );
+            },
+            icon: const Icon(Icons.warehouse),
+          ),
           IconButton(
             onPressed: () async {
               // Todo: Search db for product with this code
@@ -67,18 +91,45 @@ class _MyAppState extends State<MyApp> {
       body: FirebaseAnimatedList(
         query: listref.child('locs'),
         itemBuilder: (context, snapshot, animation, index) {
+          String barcode = snapshot.child('barcode').value as String;
           int contents = snapshot.child('contents').value as int;
           int capacity = snapshot.child('capacity').value as int;
-          var arduinoId = snapshot.child('arduinoId').value.toString();
-          return Card(
-            child: ListTile(
-              title: Text(snapshot.child('shelfId').value.toString() +
-                  ": " +
-                  (contents / capacity * 100).round().toString() +
-                  "%"),
-              subtitle: Text('Current stock level: $contents/$capacity'),
-              trailing: Text('Arduino ID: $arduinoId'),
+          String type = snapshot.child('type').value as String;
+          String arduinoId = snapshot.child('arduinoId').value as String;
+          return InkWell(
+            child: Card(
+              child: ListTile(
+                title: Row(
+                  children: [
+                    Text(
+                      snapshot.child('shelfId').value.toString() +
+                          " (" +
+                          type +
+                          ") : ",
+                    ),
+                    (type == "ldr")
+                        ? Text(
+                            (contents / capacity * 100).round().toString() +
+                                "%",
+                          )
+                        : Text(
+                            contents.toString(),
+                          ),
+                  ],
+                ),
+                subtitle: (type == "ldr")
+                    ? Text('Current stock level: $contents/$capacity')
+                    : Text('Current stock level: $contents'),
+                trailing: Text('Arduino ID: $arduinoId'),
+              ),
             ),
+            onTap: () async {
+              await listref.update(
+                {
+                  'barcode': barcode,
+                },
+              );
+            },
           );
         },
       ),
