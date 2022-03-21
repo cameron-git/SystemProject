@@ -1,6 +1,7 @@
-#include "ArduinoJson.h"
-#include "Firebase_Arduino_WiFiNINA.h"
-#include "HX711.h"
+#include <ArduinoJson.h>
+#include <Firebase_Arduino_WiFiNINA.h>
+#include <HX711.h>
+#include <Servo.h>
 
 #define LOADCELL_DOUT_PIN 2
 #define LOADCELL_SCK_PIN 3
@@ -16,11 +17,15 @@
 #define WIFI_PASSWORD "camerons10"
 #define ARDUINO_ID "Arduino 1"
 #define LDR_CUTOFF 300
+#define SERVO_PIN A5
+
+Servo myservo;
 
 FirebaseData fbdo;
 int count;
 float scaleReading;
 int8_t ldrPins[] = {A0, A1, A2, A3};
+
 StaticJsonDocument<512> doc;
 JsonObject shelf1 = doc.createNestedObject();
 JsonObject shelf2 = doc.createNestedObject();
@@ -31,7 +36,7 @@ float calibration_factor = 7050;
 
 void setup()
 {
-  
+
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 
@@ -40,6 +45,7 @@ void setup()
   scale.tare();
   pinMode(TARE_PIN, INPUT);
   pinMode(CALIBRATE_PIN, INPUT);
+  myservo.attach(SERVO_PIN);
 
   shelf1["shelfId"] = "Shelf 1";
   shelf1["barcode"] = "0001";
@@ -59,7 +65,6 @@ void setup()
 
   if (Firebase.setJSON(fbdo, "/locs/", jsonData))
   {
-    
   }
   else
   {
@@ -88,10 +93,17 @@ void loop()
     serializeJson(doc, jsonData);
     if (Firebase.setJSON(fbdo, "/locs/", jsonData))
     {
-     
     }
     else
     {
+    }
+    if (shelf1["contents"] < 2)
+    {
+      myservo.write(180);
+    }
+    else
+    {
+      myservo.write(90);
     }
   }
 }
