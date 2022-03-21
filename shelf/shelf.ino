@@ -6,6 +6,7 @@
 #define LOADCELL_SCK_PIN 3
 #define TARE_PIN 4
 #define CALIBRATE_PIN 5
+#define SCALE_NUM 1
 
 #define DATABASE_URL "systemprojectgroup1-default-rtdb.europe-west1.firebasedatabase.app"
 #define DATABASE_SECRET "kNyRYqXGdkTOw2WDaNOmgNiL4yQaJGoImAPHFr9C"
@@ -17,7 +18,8 @@
 #define LDR_CUTOFF 300
 
 FirebaseData fbdo;
-int count, scaleReading;
+int count;
+float scaleReading;
 int8_t ldrPins[] = {A0, A1, A2, A3};
 StaticJsonDocument<512> doc;
 JsonObject shelf1 = doc.createNestedObject();
@@ -73,6 +75,7 @@ void loop()
   if (digitalRead(TARE_PIN) == HIGH)
   {
     scale.tare();
+    Serial.println("tare");
     while (digitalRead(TARE_PIN) == HIGH)
       ;
     return;
@@ -98,7 +101,6 @@ void loop()
       Serial.println(fbdo.errorReason());
     }
   }
-  delay(1000);
 }
 
 bool updateLDR()
@@ -121,7 +123,7 @@ bool updateLDR()
 
 bool updateScale()
 {
-  scaleReading = (int)scale.get_units(10);
+  scaleReading = scale.get_units(10);
   if (scaleReading != shelf2["contents"])
   {
     shelf2["contents"] = scaleReading;
@@ -132,6 +134,7 @@ bool updateScale()
 
 void calibrateScale()
 {
-  scaleReading = scale.read_average();
+  scaleReading = scale.get_value(10) / SCALE_NUM;
+  Serial.println(scaleReading);
   scale.set_scale(scaleReading);
 }

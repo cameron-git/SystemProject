@@ -92,7 +92,8 @@ class _MyAppState extends State<MyApp> {
         query: listref.child('locs'),
         itemBuilder: (context, snapshot, animation, index) {
           String barcode = snapshot.child('barcode').value as String;
-          int contents = snapshot.child('contents').value as int;
+          num contents = snapshot.child('contents').value as num;
+          contents = contents.round();
           int capacity = snapshot.child('capacity').value as int;
           String type = snapshot.child('type').value as String;
           String arduinoId = snapshot.child('arduinoId').value as String;
