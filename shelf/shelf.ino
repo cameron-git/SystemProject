@@ -31,9 +31,7 @@ float calibration_factor = 7050;
 
 void setup()
 {
-  Serial.begin(9600);
-
-  delay(1000);
+  
   Firebase.begin(DATABASE_URL, DATABASE_SECRET, WIFI_SSID, WIFI_PASSWORD);
   Firebase.reconnectWiFi(true);
 
@@ -61,12 +59,10 @@ void setup()
 
   if (Firebase.setJSON(fbdo, "/locs/", jsonData))
   {
-    if (fbdo.dataType() == "json")
-      Serial.println(fbdo.jsonData());
+    
   }
   else
   {
-    Serial.println(fbdo.errorReason());
   }
 }
 
@@ -75,7 +71,6 @@ void loop()
   if (digitalRead(TARE_PIN) == HIGH)
   {
     scale.tare();
-    Serial.println("tare");
     while (digitalRead(TARE_PIN) == HIGH)
       ;
     return;
@@ -93,12 +88,10 @@ void loop()
     serializeJson(doc, jsonData);
     if (Firebase.setJSON(fbdo, "/locs/", jsonData))
     {
-      if (fbdo.dataType() == "json")
-        Serial.println(fbdo.jsonData());
+     
     }
     else
     {
-      Serial.println(fbdo.errorReason());
     }
   }
 }
@@ -135,6 +128,5 @@ bool updateScale()
 void calibrateScale()
 {
   scaleReading = scale.get_value(10) / SCALE_NUM;
-  Serial.println(scaleReading);
   scale.set_scale(scaleReading);
 }

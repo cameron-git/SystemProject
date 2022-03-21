@@ -18,7 +18,7 @@ void setup()
         ;
     SPI.begin(); // Init SPI bus
     mfrc522.PCD_Init();
-    memcpy(buffer, "0000", 16);
+    memcpy(buffer, "0002", 16);
     Serial.println("Looking...");
 }
 
